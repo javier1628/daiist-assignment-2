@@ -23,3 +23,6 @@ Running log of decisions, bugs and numbers. Bullets, newest section last.
   Google Colab (T4) because this container has no GPU. Weights are committed
   from Colab as `weights/best.pt`, then pulled here for the sweep, review band
   and dashboard.
+- Branching: all work happens on `claude/funny-rubin-b746w8`. Before the final
+  PR to ami232/daiist-assignment-2, merge that branch into the fork's `main`
+  and open the PR from `main`. To be done at the end, on instruction.
