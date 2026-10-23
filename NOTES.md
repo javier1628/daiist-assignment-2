@@ -61,3 +61,47 @@ Running log of decisions, bugs and numbers. Bullets, newest section last.
   high-resolution video frames the lines and labels vanished. Now draws after
   resizing.
 - Dataset choice is the owner's. No recommendation recorded.
+
+## Dataset pinned (2026-10-23)
+
+- Chosen by the owner: Roboflow Universe `roboflow-ngkro/package-detection-e1ssd/6`
+  (workspace `roboflow-ngkro`, project `package-detection-e1ssd`, version 6,
+  YOLOv11 export). Pinned in `src/data.py`; `get_dataset()` downloads to
+  `data/raw/` once and returns `data.yaml`.
+- The other candidate downloads were deleted from `data/candidates/`; only the
+  chosen one and its preview remain there.
+- Decision classes, set by the owner: positive ("compromised") = Box_broken or
+  Open_package; negative ("intact") = Box or Package. An image is positive if it
+  holds at least one positive box. Constants live in `src/data.py`.
+- Project is public on Universe (API `public: True`), but the export's
+  `data.yaml` license field says `Private`. Worth stating in the report.
+
+## Dataset description (2026-10-23)
+
+- `scripts/describe_dataset.py` writes `outputs/dataset_stats.json`,
+  `outputs/dataset_stats.md` and `outputs/box_area_hist.png`.
+- Roboflow version 6 metadata: preprocessing = auto-orient plus resize to
+  640x640 stretch; augmentation field empty, so no augmentation. All 1200
+  images are 640x640 on disk. No field says how the split was made; the exact
+  70/20/10 ratio (840/240/120) matches Roboflow's default, so a Roboflow random
+  split is the likely explanation. Inference, not fact.
+- Per split: train 840 images / 1052 boxes, valid 240 / 305, test 120 / 136.
+  Instances per class (train/valid/test): Box 314/103/31, Box_broken 206/64/34,
+  Open_package 225/54/29, Package 307/84/42.
+- Image-level balance: train 424 positive vs 416 negative, valid 118 vs 122,
+  test 62 vs 58. Roughly 50/50 in every split, so the dataset base rate is not
+  a production base rate. Only 5 images mix positive and negative boxes.
+- Zero-label images: none. Boxes per image: mean about 1.2, max 11.
+- Box area: medians Box 25.6%, Box_broken 29.6%, Open_package 38.7%, Package
+  45.6% of image area. p10 is 8 to 19%, so objects are large; not a small-object
+  problem.
+- Near-duplicates (pHash, Hamming <= 4): 24 pairs, 14 of them exact hash
+  matches. Within train 11, none within valid or test. Across splits: 13 pairs
+  (train/valid 7, test/valid 4, test/train 2). So some test images have a
+  near-identical twin in train or valid, which inflates test scores slightly.
+  Example pairs with filenames are in `outputs/dataset_stats.md`.
+- Duplicate check verified at pixel level: 18 of the 24 flagged pairs differ by
+  a mean of under 5 grey levels, so they are re-uploads, not pHash
+  false positives. The twins carry different label files (re-annotated copies).
+  6 of the 120 test images have a twin in train or valid. Keep this in mind
+  when reading test metrics; dropping them is an option the owner decides.
