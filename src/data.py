@@ -37,13 +37,38 @@ def is_downloaded(raw_dir: Path = RAW_DIR) -> bool:
     return all((raw_dir / split / "images").is_dir() for split in SPLITS)
 
 
-def get_dataset(raw_dir: Path = RAW_DIR, force: bool = False) -> Path:
+def normalise_data_yaml(data_yaml: Path) -> Path:
+    """Make the Roboflow data.yaml usable from any working directory.
+
+    Roboflow writes `train: ../train/images`, which Ultralytics resolves
+    relative to its datasets directory, not to the yaml. Set an absolute
+    `path` and split folders relative to it instead. Idempotent.
+    """
+    import yaml
+
+    cfg = yaml.safe_load(data_yaml.read_text(encoding="utf-8"))
+    root = data_yaml.parent.resolve()
+    wanted = {
+        "path": str(root),
+        "train": "train/images",
+        "val": "valid/images",
+        "test": "test/images",
+    }
+    if all(cfg.get(k) == v for k, v in wanted.items()):
+        return data_yaml
+    cfg.update(wanted)
+    data_yaml.write_text(yaml.safe_dump(cfg, sort_keys=False), encoding="utf-8")
+    return data_yaml
+
+
+def ensure_dataset(raw_dir: Path = RAW_DIR, force: bool = False) -> Path:
     """Download the pinned dataset version if needed and return data.yaml.
 
-    Skips the download when a complete export is already in `raw_dir`.
+    Skips the download when a complete export is already in `raw_dir`. The
+    returned data.yaml always has absolute paths (see normalise_data_yaml).
     """
     if is_downloaded(raw_dir) and not force:
-        return raw_dir / "data.yaml"
+        return normalise_data_yaml(raw_dir / "data.yaml")
 
     from roboflow import Roboflow
 
@@ -59,7 +84,10 @@ def get_dataset(raw_dir: Path = RAW_DIR, force: bool = False) -> Path:
     data_yaml = location / "data.yaml"
     if not data_yaml.is_file():
         raise FileNotFoundError(f"download finished but {data_yaml} is missing")
-    return data_yaml
+    return normalise_data_yaml(data_yaml)
+
+
+get_dataset = ensure_dataset  # older name, kept for scripts/describe_dataset.py
 
 
 def get_version_metadata() -> dict:
@@ -78,7 +106,7 @@ def get_version_metadata() -> dict:
 
 
 if __name__ == "__main__":
-    print(get_dataset())
+    print(ensure_dataset())
 
 # Image-level decision classes come from src/config.py (owner-supplied). An
 # image is "compromised" (positive) when it holds at least one box of a

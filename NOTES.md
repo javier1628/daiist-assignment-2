@@ -23,7 +23,7 @@ Running log of decisions, bugs and numbers. Bullets, newest section last.
   Google Colab (T4) because this container has no GPU. Weights are committed
   from Colab as `weights/best.pt`, then pulled here for the sweep, review band
   and dashboard.
-- Branching: all work happens on `claude/funny-rubin-b746w8`. Before the final
+- Branching: all work happens on `assignment-2`. Before the final
   PR to ami232/daiist-assignment-2, merge that branch into the fork's `main`
   and open the PR from `main`. To be done at the end, on instruction.
 
@@ -127,3 +127,41 @@ Running log of decisions, bugs and numbers. Bullets, newest section last.
 - `tests/test_scoring.py`: 14 tests, all passing. Covers the five required
   cases plus name-based resolution with a shuffled index map, bad threshold
   order, and that the config class lists are disjoint and cover the dataset.
+
+## Training pipeline and evaluation code (2026-10-23)
+
+- Branch renamed from `claude/funny-rubin-b746w8` to `assignment-2` locally and on
+  origin. The old remote branch could not be deleted from this session (the push
+  proxy returns 403 on deletions); the owner deletes it on GitHub.
+- `train.ipynb` deleted. `train.py` is the pipeline: `ensure_dataset()`, finetune
+  `yolo11n.pt` with imgsz 640, epochs 50, batch 16, seed 42, deterministic,
+  patience 10, project `runs`, name `finetune`; copy best checkpoint to
+  `weights/best.pt`; then `src.evaluate`. Device, versions, settings and
+  wall-clock go to `outputs/train_log.json` and are appended to NOTES.md by
+  the run itself. The log is written before evaluation so a failure there
+  cannot lose it.
+- `src/data.py` gained `ensure_dataset()` (old `get_dataset` kept as alias) and
+  `normalise_data_yaml()`: Roboflow writes `train: ../train/images`, which
+  Ultralytics resolves against its own datasets directory, not the yaml, so
+  the yaml now carries an absolute `path` and split folders relative to it.
+- `src/evaluate.py`: detection metrics via `model.val` twice per subset, conf
+  0.001 for mAP and conf 0.25 for the confusion matrix, because in
+  ultralytics 8.4 the matrix uses the validator's own conf and a 0.001 matrix
+  would flag everything. Image scores at conf 0.001 via `src.scoring` to
+  `outputs/test_scores.csv` with filename, score, label, main-box class and a
+  `dup_in_trainval` flag. TPR/FPR at 0.25 and 0.50 with FPR split by Box vs
+  Package. Everything computed on all 120 test images and on the 114 without a
+  twin in train/valid, taking the pair list from `outputs/dataset_stats.json`.
+  Baselines: COCO yolo11n zero-shot (class histogram at conf 0.25, every image
+  scored 0.0, no class mapping invented) and trivial all-pass / all-fail, to
+  `outputs/baselines.json`.
+- Not yet exercised end to end: a smoke test of `evaluate.py` with a
+  random-weight 4-class checkpoint was prepared but not run. First real run
+  is the Colab training; `train.py` keeps the weights even if evaluation
+  fails.
+- `notebooks/train_colab.ipynb` (outside the repo root so `main.py` ignores
+  it): GPU check, clone the fork at `assignment-2`, pip install
+  ultralytics==8.4.173 and roboflow, key from Colab secrets, `python main.py
+  train`, zip `weights/best.pt` + `outputs/` and download.
+- `.gitignore`: root-level `*.pt` ignored (the `yolo11n.pt` Ultralytics
+  downloads); `weights/best.pt` stays committed.
