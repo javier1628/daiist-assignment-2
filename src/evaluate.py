@@ -179,7 +179,7 @@ def save_confusion(matrix, names: list[str], stem: Path, title: str) -> None:
     labels = list(names) + ["background"]
     m = np.asarray(matrix, dtype=int)
     with (stem.with_suffix(".csv")).open("w", newline="", encoding="utf-8") as f:
-        w = csv.writer(f)
+        w = csv.writer(f, lineterminator="\n")
         w.writerow(["predicted \\ true"] + labels)
         for i, row in enumerate(m):
             w.writerow([labels[i]] + [int(v) for v in row])
@@ -203,10 +203,12 @@ def save_confusion(matrix, names: list[str], stem: Path, title: str) -> None:
 def detection_metrics(model, data_yaml: Path, names: list[str], device: str,
                       run_name: str, out_dir: Path, subset: str) -> dict:
     common = dict(data=str(data_yaml), split="test", imgsz=IMGSZ, batch=16, device=device,
-                  plots=False, verbose=False, project=str(ROOT / "runs"), exist_ok=True)
-    m_map = model.val(conf=SCORE_CONF, name=f"{run_name}_map", **common)
+                  verbose=False, project=str(ROOT / "runs"), exist_ok=True)
+    m_map = model.val(conf=SCORE_CONF, name=f"{run_name}_map", plots=False, **common)
     result = per_class_metrics(m_map, names)
-    m_cm = model.val(conf=MATRIX_CONF, name=f"{run_name}_cm", **common)
+    # plots=True is required: the validator only fills the confusion matrix
+    # when plotting is on. Its own PNGs land in runs/, which is git-ignored.
+    m_cm = model.val(conf=MATRIX_CONF, name=f"{run_name}_cm", plots=True, **common)
     save_confusion(
         m_cm.confusion_matrix.matrix, names, out_dir / f"confusion_matrix_{subset}",
         f"Test confusion matrix, {subset} (conf {MATRIX_CONF})",
@@ -276,7 +278,7 @@ def score_images(model, images: list[Path], names: list[str], device: str,
 
 def write_scores_csv(rows: list[dict], path: Path) -> None:
     with path.open("w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=["filename", "score", "label", "main_class", "dup_in_trainval"])
+        w = csv.DictWriter(f, fieldnames=["filename", "score", "label", "main_class", "dup_in_trainval"], lineterminator="\n")
         w.writeheader()
         w.writerows(rows)
 
@@ -302,7 +304,7 @@ def coco_baseline(images: list[Path], rows: list[dict], device: str, out_dir: Pa
             det_rows.append({"filename": img.name, "coco_class": name, "conf": round(conf, 4)})
         images_with_any += n > 0
     with (out_dir / "baseline_coco_detections.csv").open("w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=["filename", "coco_class", "conf"])
+        w = csv.DictWriter(f, fieldnames=["filename", "coco_class", "conf"], lineterminator="\n")
         w.writeheader()
         w.writerows(det_rows)
     # Every image scores 0.0: COCO has no package class and we do not invent a mapping.

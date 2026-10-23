@@ -165,3 +165,13 @@ Running log of decisions, bugs and numbers. Bullets, newest section last.
   train`, zip `weights/best.pt` + `outputs/` and download.
 - `.gitignore`: root-level `*.pt` ignored (the `yolo11n.pt` Ultralytics
   downloads); `weights/best.pt` stays committed.
+- Smoke test of `src/evaluate.py` done with a random-weight 4-class checkpoint
+  built in the scratchpad (class head biased toward Box_broken so positive
+  scores appear). No training. Ran end to end on CPU in about 70 s: all-120
+  and dedup-114 paths, both confusion matrices, `test_scores.csv` with the
+  right columns and 6 `dup_in_trainval` rows, and both baselines.
+  Two bugs fixed: (1) ultralytics 8.4 only fills the confusion matrix when
+  `plots=True`, so the matrix pass now sets it (its PNGs go to `runs/`,
+  git-ignored); (2) CSV writers used CRLF line endings, now LF. The scratch
+  checkpoint and every file it produced were deleted; nothing from random
+  weights is committed.
