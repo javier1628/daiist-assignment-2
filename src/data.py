@@ -80,8 +80,8 @@ def get_version_metadata() -> dict:
 if __name__ == "__main__":
     print(get_dataset())
 
-# Image-level decision classes. An image is "compromised" (positive) when it
-# holds at least one box of a positive class, "intact" (negative) when every
-# box is a negative class, and "unlabelled" when it has no boxes.
-POSITIVE_CLASSES = ("Box_broken", "Open_package")
-NEGATIVE_CLASSES = ("Box", "Package")
+# Image-level decision classes come from src/config.py (owner-supplied). An
+# image is "compromised" (positive) when it holds at least one box of a
+# positive class, "intact" (negative) when every box is a negative class, and
+# "unlabelled" when it has no boxes.
+from src.config import NEGATIVE_CLASSES, POSITIVE_CLASSES  # noqa: E402,F401

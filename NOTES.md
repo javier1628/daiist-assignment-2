@@ -105,3 +105,25 @@ Running log of decisions, bugs and numbers. Bullets, newest section last.
   false positives. The twins carry different label files (re-annotated copies).
   6 of the 120 test images have a twin in train or valid. Keep this in mind
   when reading test metrics; dropping them is an option the owner decides.
+
+## Business figures and scoring (2026-10-23)
+
+- `src/config.py` holds every owner-supplied figure. Costs in DOP per unit:
+  FN 7000 (replacement 4400 + two-way freight 2500, claim window closed), FP 40
+  (10-min unpack at RD$3/min), human review 40 (same unpack), model-FAIL
+  confirmation 10 (3-min glance, photo is the claim evidence). Wage RD$3/min.
+  Base rate 1%, sweep [0.5%, 1%, 3%, 5%, 10%, 15%]. Containers 20ft 200,
+  40ft_low 400, 40ft_high 600 units; receiving is per container, no daily
+  flow. Staff 2, 7 productive hours/day, 7-day claim window. DOP per EUR
+  68.67 (poundsterlinglive.com, 2026-10-23).
+- The class lists moved from `src/data.py` into `src/config.py`; `data.py`
+  re-exports them so the describe script is unchanged.
+- `src/scoring.py`: `image_score` = max confidence over positive-class
+  detections, resolved by class name via `results.names`, 0.0 if none.
+  `decide(score, t_low, t_high)`: `score >= t_high` fail, `score >= t_low`
+  review, else pass. Ties go to the stricter outcome; `t_low == t_high`
+  gives no review band. `image_label` reads a YOLO label file and returns
+  True if any box is a positive class.
+- `tests/test_scoring.py`: 14 tests, all passing. Covers the five required
+  cases plus name-based resolution with a shuffled index map, bad threshold
+  order, and that the config class lists are disjoint and cover the dataset.
