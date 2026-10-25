@@ -195,3 +195,41 @@ Running log of decisions, bugs and numbers. Bullets, newest section last.
   detection at conf 0.001. The two passes therefore report different numbers
   by design. `test_metrics_finetuned.json` records `map_conf`,
   `confusion_matrix_conf` and a `conf_note` at top level and per subset.
+
+## Training run (2026-10-25)
+
+- Dataset `roboflow-ngkro/package-detection-e1ssd/6`, base weights `yolo11n.pt`.
+- Device: Tesla T4 (0). ultralytics 8.4.173, torch 2.11.0+cu130, python 3.13.16.
+- Settings: imgsz=640, epochs=50, batch=16, seed=42, deterministic=True, patience=10, project=runs, name=finetune, exist_ok=True.
+- Epochs run: 50 of 50 (patience 10). Best epoch: 50.
+- Wall-clock: training 652s, evaluation 19s, total 681s.
+- Run directory: `/content/daiist-assignment-2/runs/detect/runs/finetune`. Best checkpoint copied to `weights/best.pt` (5.5 MB).
+
+## Colab run 2: results landed and reproduced (2026-10-25)
+
+- The Colab artifacts were uploaded through the GitHub web UI onto the fork's
+  `main` (two "Add files via upload" commits: `weights/best.pt`, then
+  `outputs/`), not onto `assignment-2`. Brought onto `assignment-2` with
+  `git checkout origin/main -- weights/best.pt outputs/`. `main` was left as is.
+- `weights/best.pt` is 5,474,010 bytes; `outputs/` holds 12 files including
+  `train_log.json`. Training: Tesla T4, 50 of 50 epochs in 652 s, best epoch
+  50, so early stopping never triggered and the model was still improving at
+  the last epoch. Worth stating in the report; a longer run is an option the
+  owner decides. The nested `runs/detect/runs/finetune` path and the
+  `yolo26n.pt` removal both behaved as fixed.
+- Headline test numbers (GPU run, conf 0.001 for mAP): all 120 images mAP50
+  0.9678, mAP50-95 0.8884; dedup 114 images mAP50 0.965, mAP50-95 0.8836.
+  Image level: TPR 0.9516 / FPR 0.069 at 0.25, TPR 0.9355 / FPR 0.0517 at
+  0.50 (all); TPR 0.9483 / FPR 0.0714 at 0.25, TPR 0.931 / FPR 0.0536 at 0.50
+  (dedup).
+- CPU reproduction of `src.evaluate` against the committed GPU outputs:
+  `test_metrics_finetuned.json` identical except the `device` field;
+  `baselines.json` identical; both confusion-matrix CSVs identical;
+  `test_scores.csv` identical in labels and classes, 12 of 120 scores differ
+  in the sixth decimal (max difference 0.000002), no pass/fail flip at 0.25
+  or 0.50; `baseline_coco_detections.csv` has the same 91 detections with
+  identical confidences, only row order within an image differs. The
+  committed GPU files stay as the canonical outputs.
+- `check.py`: key check and weights check pass (4 classes load). Step 3 fails
+  because `app.py` and `app.ipynb` both still exist and `app.py` is the
+  template; expected until the dashboard is built.
