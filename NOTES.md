@@ -321,3 +321,49 @@ Running log of decisions, bugs and numbers. Bullets, newest section last.
   do nothing 70,000 DOP (28,000); person checks everything 40,000 (16,000);
   model alone at t = 0.20: 4,165 (1,666); model at the chosen pair
   (0.02, 0.02): 3,379 (1,352). In EUR per container: 408 / 233 / 24 / 20.
+
+## Review band, attempt 2: the false-claim cost (2026-10-25)
+
+- Why attempt 1 collapsed: it priced a FAIL at 10 DOP whether the unit was
+  damaged or intact, and assumed the 3-minute glance catches everything. That
+  made FAIL a strictly cheaper version of REVIEW (40 DOP), so the band could
+  never win and the optimum became "fail anything above 0.02". But a FAIL is
+  a claim filed on the photo without unpacking; on an intact unit that is a
+  false claim with admin and credibility costs. Attempt 1 is kept as
+  `outputs/review_attempt1_*` and is reproducible with
+  `scripts/review_band.py --false-claim 0`.
+- New figures in `src/config.py`: `COST_FALSE_CLAIM_DOP = 500` (about 1 h of
+  admin at ~RD$250/h to file and reverse a claim, plus credibility with the
+  supplier/forwarder; owner to confirm) and `COST_FALSE_CLAIM_SWEEP =
+  [100, 500, 2000]`. Outcome costs now: pass 0 intact / 7000 damaged; review
+  40 either way; fail 10 damaged / 10 + false claim intact.
+- Result, identical at all three false-claim costs: chosen
+  (t_low, t_high) = (0.34, 0.94), 6,310 DOP per 1,000 (91.89 EUR). Eight
+  pairs tie exactly (t_low 0.20 to 0.34, t_high 0.94); the tie-break takes
+  the narrowest band. Near-optimal band within one test positive (1,129
+  DOP): t_low 0.02 to 0.84, t_high 0.94 to 1.00 (138 pairs at 500 and 2000,
+  146 at 100 where t_high 0.90 also qualifies). No single-threshold pair is
+  inside the band at any false-claim cost; the best single threshold at 500
+  is t = 0.90 at 17,825 DOP. Dedup check: same pair, 6,637 DOP.
+- Why the false-claim cost does not move the optimum: at t_high = 0.94 no
+  test negative fails (the highest negative score is 0.934), so the
+  false-claim term is zero there. It does shape everything else: one step
+  down to t_high = 0.92 lets that one negative fail and the cost jumps to
+  7,447 / 14,274 / 39,878 DOP at 100 / 500 / 2000. So t_high is pinned by a
+  single test negative; the safe reading is "t_high high enough that no
+  intact unit is ever failed on the photo", which 0.94 to 1.00 all satisfy
+  within 190 DOP of each other. At the chosen pair: 39 of 62 test positives
+  fail, 20 review, 3 pass; 54 of 58 negatives pass, 4 review, 0 fail.
+- Per 1,000 units at (0.34, 0.94): 0.48 missed, 71.5 reviewed, 6.3 failed,
+  0 false claims. Model alone at sweep.py's t = 0.20 now costs 38,303 DOP
+  (68 false claims per 1,000 at 500 each), barely better than checking
+  everything; the band is what makes the model usable under this costing.
+- Review load at (0.34, 0.94), 2 staff, 7 h/day, 7-day claim window:
+  20ft (200): 14.3 review, 1.3 fail, 2.5 person-hours, 0.18 days;
+  40ft_low (400): 28.6 review, 2.5 fail, 4.9 person-hours, 0.35 days;
+  40ft_high (600): 42.9 review, 3.8 fail, 7.3 person-hours, 0.52 days.
+  All fit the window; expected missed damaged units 0.10 / 0.19 / 0.29.
+- Options at 500 (per 1,000; per 400-box container): do nothing 70,000
+  (28,000); person checks everything 40,000 (16,000); model alone at 0.20:
+  38,303 (15,321); model + review band (0.34, 0.94): 6,310 (2,524). EUR per
+  container: 408 / 233 / 223 / 37.

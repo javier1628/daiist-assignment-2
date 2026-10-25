@@ -18,3 +18,8 @@ STAFF = 2
 HOURS_PER_DAY = 7            # 8 h minus 1 h lunch
 CLAIM_WINDOW_DAYS = 7
 DOP_PER_EUR = 68.67          # poundsterlinglive.com, 2026-10-23
+
+# A model FAIL files a claim on the photo without unpacking. On an intact unit
+# that is a false claim.
+COST_FALSE_CLAIM_DOP = 500   # admin to file and reverse a claim on an intact unit (~1 h at ~RD$250/h) plus credibility with the supplier/forwarder; owner to confirm
+COST_FALSE_CLAIM_SWEEP = [100, 500, 2000]
