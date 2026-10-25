@@ -233,3 +233,49 @@ Running log of decisions, bugs and numbers. Bullets, newest section last.
 - `check.py`: key check and weights check pass (4 classes load). Step 3 fails
   because `app.py` and `app.ipynb` both still exist and `app.py` is the
   template; expected until the dashboard is built.
+
+## Single-threshold cost sweep (2026-10-25)
+
+- `scripts/sweep.py` reads `outputs/test_scores.csv` and `src/config.py`;
+  thresholds 0.00 to 1.00 in 0.01 steps, flag if score >= t. Test TPR/FPR
+  rescaled to 1,000 units: FN = 1000 x base_rate x (1 - TPR),
+  FP = 1000 x (1 - base_rate) x FPR, cost = FN x 7000 + FP x 40 DOP.
+  Outputs: `sweep.csv`, `sweep_summary.json`, `cost_curve.png`,
+  `options_single_threshold.csv`.
+- At base rate 1%: minimum 6,118 DOP per 1,000 (89.09 EUR), reached at every
+  t from 0.20 to 0.34 (TPR 0.9516, FPR 0.0690; 0.48 missed and 68.3 false
+  alarms per 1,000). Flat band within one test positive of the minimum
+  (tolerance 1,129 DOP = 1000 x 0.01 x 1/62 x 7000): t = 0.01 to 0.85. The
+  curve is flat because 62 test positives make each TPR step worth 1,129 DOP
+  and 58 negatives make each FPR step worth 683 DOP, so only a handful of
+  images separate neighbouring thresholds.
+- Dedup check (114 images): same minimum threshold 0.20 and same band
+  0.01 to 0.85; minimum 6,449 DOP, higher because the 6 removed test images
+  included easy cases.
+- Minimum-cost threshold moves with base rate: 0.65 at 0.5%, 0.20 at 1%,
+  0.02 at 3% to 10%, 0.00 (flag everything) at 15%. Above about 3% the cost
+  of a miss dominates so far that the model should flag almost anything.
+- Break-even: the model beats "person checks everything" (40,000 DOP per
+  1,000) at every t from 0.00 up to 0.94; from t = 0.95 it no longer does
+  (42,903 DOP) because misses pile up.
+- Five single-threshold options at base rate 1%, DOP per 1,000 units:
+  do nothing 70,000 (1,019 EUR); person checks everything 40,000 (583 EUR);
+  model alone at t = 0.20: 6,118 (89 EUR); COCO zero-shot 70,000, identical
+  to do nothing because every image scores 0.0; flag everything 39,600
+  (577 EUR). Note flag-everything is below person-checks-everything only
+  because the formula excludes the handling cost of true positives; the
+  review-band costing adds those.
+- Worst test cases (`scripts/failures.py`, `outputs/failures/`):
+  - `5ded88cs-960_jpg...`: GT Box_broken, score 0.0000; model saw Package 0.79.
+    A crushed-corner box read as intact.
+  - `670055d7-233Open_boo_jpg...`: GT Box_broken, score 0.0015; model saw
+    Box 0.72 and Box 0.50.
+  - `76c8973b-164Packageeees_jpg...`: GT Package x2, score 0.9338; model saw
+    Open_package 0.93. The costliest kind of false alarm: a confident one.
+  - `21926138-50Booooox_jpg...`: GT Box, score 0.8984; model saw Box_broken
+    0.90 and Box 0.45.
+  - `1packaaaageeeees_jpg...`: GT Package, score 0.6410; model saw
+    Open_package 0.64 and Package 0.38.
+  The two misses score essentially zero, so no threshold recovers them; the
+  false alarms sit at 0.64 to 0.93, inside the flat band, which is why the
+  band is wide rather than why it is cheap.
