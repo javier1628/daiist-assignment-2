@@ -307,8 +307,8 @@ Running log of decisions, bugs and numbers. Bullets, newest section last.
 - At (0.02, 0.02): 60 of 62 test positives fail, 2 pass (the two near-zero
   misses), 6 of 58 negatives fail. Per 1,000 units: 0.32 missed, 112 failed,
   0 reviewed. The cheapest pair that actually uses a review band is
-  (0.02, 0.10) at 3,513 DOP, within the flat band, sending 0.68 units per
-  1,000 to review. Note this optimum (0.02) differs from sweep.py's 0.20
+  (0.02, 0.10) at 3,384 DOP, 5 DOP above the minimum and well inside the flat
+  band, sending 0.16 units per 1,000 to review (one test negative). Note this optimum (0.02) differs from sweep.py's 0.20
   because sweep.py charged a false alarm the full 40-DOP unpack and nothing
   for a true positive; here a fail costs 10 regardless.
 - Review load at (0.02, 0.02), 2 staff, 7 h/day, 7-day claim window:
