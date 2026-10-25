@@ -367,3 +367,50 @@ Running log of decisions, bugs and numbers. Bullets, newest section last.
   (28,000); person checks everything 40,000 (16,000); model alone at 0.20:
   38,303 (15,321); model + review band (0.34, 0.94): 6,310 (2,524). EUR per
   container: 408 / 233 / 223 / 37.
+
+## Chosen operating point (2026-10-25)
+
+- `src/config.py`: `CHOSEN_T_LOW = 0.20`, `CHOSEN_T_HIGH = 0.94`. Reasoning,
+  as recorded in the config comment: t_high sits just above the highest
+  score of any intact test image (0.934), so no intact unit is failed on
+  the photo. t_low: the symmetric rule, just below the lowest detected
+  damaged score (0.088), gives 0.08, but that sends 10.5% of boxes to
+  review to catch one extra damaged box in 62, which the test set cannot
+  resolve; 0.20 is the low end of the exact-minimum plateau and halves the
+  extra load. Both edges rest on one test image each; re-derive from dock
+  data.
+- `scripts/review_band.py` now reports the chosen pair beside the argmin
+  (0.34, 0.94): same cost 6,310 DOP per 1,000 (no test image scores between
+  0.20 and 0.34, so the two pairs are indistinguishable on this test set),
+  same 2x3 outcome table (intact: 54 pass / 4 review / 0 fail; damaged: 3
+  pass / 20 review / 39 fail), same load (7.2% to review, 0.6% failed).
+  New file `outputs/outcome_table.csv`; `review_load.csv` and `options.csv`
+  carry both pairs. The cost model moved into `src/costing.py` so the
+  report scripts and the dashboard share one implementation; the fc500
+  grid is byte-identical before and after the refactor.
+
+## Dashboard (2026-10-25)
+
+- `app.ipynb` deleted; `app.py` is the Gradio app (`uv run python main.py
+  app`, port 7860). It loads `weights/best.pt` once at import and reads
+  everything else from `outputs/` and `src/config.py`. No training, no
+  downloads; boxes are drawn with OpenCV rather than Ultralytics' plotter,
+  which would fetch a font file on first use.
+- Tabs: Inspect (upload, boxes at a confidence slider, image score at conf
+  0.001, pass/review/fail at the current thresholds, cost of that decision if
+  intact vs damaged); Thresholds (t_low, t_high sliders with t_high clamped to
+  t_low, base-rate and false-claim dropdowns, 2x3 outcome table per 1,000,
+  cost in DOP and EUR, review and fail shares, load per container); Cost curve
+  (sweep.csv curve at the selected base rate with both thresholds and the
+  near-optimal band, the two-threshold heatmap, options.csv); Per class
+  (per-class P/R/AP table, model comparison incl. COCO zero-shot and trivial,
+  confusion matrix, image-level TPR/FPR at the current thresholds with FPR
+  by Box vs Package, the five failure images).
+- The app and the report scripts share `src/costing.py`; a test asserts the
+  Thresholds tab at the defaults reproduces review_band.py's chosen-pair
+  cost. `tests/test_app.py` also asserts importing the app creates nothing
+  under `runs/` or `weights/`, loads the model once, and that the source has
+  no training or download calls. `check.py` passes all three steps.
+- Image-level at the chosen thresholds: fail only (score >= 0.94) TPR 0.629,
+  FPR 0.000; review or fail (score >= 0.20) TPR 0.952, FPR 0.069 (Box 0.080,
+  Package 0.061).

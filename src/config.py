@@ -23,3 +23,14 @@ DOP_PER_EUR = 68.67          # poundsterlinglive.com, 2026-10-23
 # that is a false claim.
 COST_FALSE_CLAIM_DOP = 500   # admin to file and reverse a claim on an intact unit (~1 h at ~RD$250/h) plus credibility with the supplier/forwarder; owner to confirm
 COST_FALSE_CLAIM_SWEEP = [100, 500, 2000]
+
+# Chosen operating point.
+# t_high: just above the highest score of any intact test image (0.934), so no
+# intact unit is failed on the photo. t_low: the symmetric rule (just below the
+# lowest detected damaged score, 0.088) gives 0.08, but that sends 10.5% of
+# boxes to review to catch one extra damaged box in 62, which the test set
+# cannot resolve; 0.20 is the low end of the exact-minimum plateau and halves
+# the extra load. Both edges rest on one test image each; re-derive from dock
+# data.
+CHOSEN_T_LOW = 0.20
+CHOSEN_T_HIGH = 0.94

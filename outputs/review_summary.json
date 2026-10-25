@@ -2100,56 +2100,163 @@
       }
     }
   },
-  "chosen": {
-    "false_claim_dop": 500,
+  "argmin": {
     "t_low": 0.34,
     "t_high": 0.94,
-    "cost_dop_per_1000": 6310.07
+    "cost_dop_per_1000": 6310.07,
+    "cost_eur_per_1000": 91.89,
+    "cost_above_min_dop": -0.0,
+    "within_band": 1,
+    "exp_fn_per_1000": 0.4839,
+    "exp_review_per_1000": 71.5017,
+    "exp_fail_per_1000": 6.2903,
+    "exp_false_claims_per_1000": 0.0,
+    "share_review": 0.0715,
+    "share_fail": 0.00629,
+    "outcome_table": [
+      {
+        "truth": "intact",
+        "pass_test_n": 54,
+        "pass_per_1000": 921.724,
+        "review_test_n": 4,
+        "review_per_1000": 68.276,
+        "fail_test_n": 0,
+        "fail_per_1000": 0.0
+      },
+      {
+        "truth": "damaged",
+        "pass_test_n": 3,
+        "pass_per_1000": 0.484,
+        "review_test_n": 20,
+        "review_per_1000": 3.226,
+        "fail_test_n": 39,
+        "fail_per_1000": 6.29
+      }
+    ],
+    "review_load": [
+      {
+        "container": "20ft",
+        "units": 200,
+        "units_to_review": 14.3,
+        "units_failed": 1.26,
+        "units_passed": 184.44,
+        "expected_missed_damaged": 0.097,
+        "person_hours": 2.45,
+        "days_to_clear": 0.175,
+        "staff": 2,
+        "hours_per_day": 7,
+        "claim_window_days": 7,
+        "fits_claim_window": 1
+      },
+      {
+        "container": "40ft_low",
+        "units": 400,
+        "units_to_review": 28.6,
+        "units_failed": 2.52,
+        "units_passed": 368.88,
+        "expected_missed_damaged": 0.194,
+        "person_hours": 4.89,
+        "days_to_clear": 0.349,
+        "staff": 2,
+        "hours_per_day": 7,
+        "claim_window_days": 7,
+        "fits_claim_window": 1
+      },
+      {
+        "container": "40ft_high",
+        "units": 600,
+        "units_to_review": 42.9,
+        "units_failed": 3.77,
+        "units_passed": 553.32,
+        "expected_missed_damaged": 0.29,
+        "person_hours": 7.34,
+        "days_to_clear": 0.524,
+        "staff": 2,
+        "hours_per_day": 7,
+        "claim_window_days": 7,
+        "fits_claim_window": 1
+      }
+    ]
   },
-  "review_load": [
-    {
-      "container": "20ft",
-      "units": 200,
-      "units_to_review": 14.3,
-      "units_failed": 1.26,
-      "units_passed": 184.44,
-      "expected_missed_damaged": 0.097,
-      "person_hours": 2.45,
-      "days_to_clear": 0.175,
-      "staff": 2,
-      "hours_per_day": 7,
-      "claim_window_days": 7,
-      "fits_claim_window": 1
-    },
-    {
-      "container": "40ft_low",
-      "units": 400,
-      "units_to_review": 28.6,
-      "units_failed": 2.52,
-      "units_passed": 368.88,
-      "expected_missed_damaged": 0.194,
-      "person_hours": 4.89,
-      "days_to_clear": 0.349,
-      "staff": 2,
-      "hours_per_day": 7,
-      "claim_window_days": 7,
-      "fits_claim_window": 1
-    },
-    {
-      "container": "40ft_high",
-      "units": 600,
-      "units_to_review": 42.9,
-      "units_failed": 3.77,
-      "units_passed": 553.32,
-      "expected_missed_damaged": 0.29,
-      "person_hours": 7.34,
-      "days_to_clear": 0.524,
-      "staff": 2,
-      "hours_per_day": 7,
-      "claim_window_days": 7,
-      "fits_claim_window": 1
-    }
-  ],
+  "chosen": {
+    "source": "src/config.py CHOSEN_T_LOW / CHOSEN_T_HIGH",
+    "t_low": 0.2,
+    "t_high": 0.94,
+    "cost_dop_per_1000": 6310.07,
+    "cost_eur_per_1000": 91.89,
+    "cost_above_min_dop": -0.0,
+    "within_band": 1,
+    "exp_fn_per_1000": 0.4839,
+    "exp_review_per_1000": 71.5017,
+    "exp_fail_per_1000": 6.2903,
+    "exp_false_claims_per_1000": 0.0,
+    "share_review": 0.0715,
+    "share_fail": 0.00629,
+    "outcome_table": [
+      {
+        "truth": "intact",
+        "pass_test_n": 54,
+        "pass_per_1000": 921.724,
+        "review_test_n": 4,
+        "review_per_1000": 68.276,
+        "fail_test_n": 0,
+        "fail_per_1000": 0.0
+      },
+      {
+        "truth": "damaged",
+        "pass_test_n": 3,
+        "pass_per_1000": 0.484,
+        "review_test_n": 20,
+        "review_per_1000": 3.226,
+        "fail_test_n": 39,
+        "fail_per_1000": 6.29
+      }
+    ],
+    "review_load": [
+      {
+        "container": "20ft",
+        "units": 200,
+        "units_to_review": 14.3,
+        "units_failed": 1.26,
+        "units_passed": 184.44,
+        "expected_missed_damaged": 0.097,
+        "person_hours": 2.45,
+        "days_to_clear": 0.175,
+        "staff": 2,
+        "hours_per_day": 7,
+        "claim_window_days": 7,
+        "fits_claim_window": 1
+      },
+      {
+        "container": "40ft_low",
+        "units": 400,
+        "units_to_review": 28.6,
+        "units_failed": 2.52,
+        "units_passed": 368.88,
+        "expected_missed_damaged": 0.194,
+        "person_hours": 4.89,
+        "days_to_clear": 0.349,
+        "staff": 2,
+        "hours_per_day": 7,
+        "claim_window_days": 7,
+        "fits_claim_window": 1
+      },
+      {
+        "container": "40ft_high",
+        "units": 600,
+        "units_to_review": 42.9,
+        "units_failed": 3.77,
+        "units_passed": 553.32,
+        "expected_missed_damaged": 0.29,
+        "person_hours": 7.34,
+        "days_to_clear": 0.524,
+        "staff": 2,
+        "hours_per_day": 7,
+        "claim_window_days": 7,
+        "fits_claim_window": 1
+      }
+    ]
+  },
   "options": [
     {
       "option": "do_nothing",
@@ -2191,11 +2298,25 @@
       "cost_eur_per_1000": 557.78,
       "cost_dop_per_container_400": 15321.18,
       "cost_eur_per_container_400": 223.11,
-      "note": "t_low = t_high at the single-threshold optimum from sweep.py; no review band; fail costs 10 DOP, plus 500 DOP false claim if intact"
+      "note": "t_low = t_high at sweep.py's single-threshold optimum; no review band; fail costs 10 DOP, plus 500 DOP false claim if intact"
     },
     {
-      "option": "model_plus_review_band",
+      "option": "model_plus_review_band_argmin",
       "t_low": 0.34,
+      "t_high": 0.94,
+      "exp_fn_per_1000": 0.4839,
+      "exp_review_per_1000": 71.5017,
+      "exp_fail_per_1000": 6.2903,
+      "exp_false_claims_per_1000": 0.0,
+      "cost_dop_per_1000": 6310.07,
+      "cost_eur_per_1000": 91.89,
+      "cost_dop_per_container_400": 2524.03,
+      "cost_eur_per_container_400": 36.76,
+      "note": "pass / review / fail at the argmin pair"
+    },
+    {
+      "option": "model_plus_review_band_chosen",
+      "t_low": 0.2,
       "t_high": 0.94,
       "exp_fn_per_1000": 0.4839,
       "exp_review_per_1000": 71.5017,
