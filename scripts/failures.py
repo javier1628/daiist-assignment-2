@@ -47,12 +47,17 @@ def draw(img, preds, gts):
     for name, x0, y0, x1, y1 in gts:
         cv2.rectangle(img, (x0, y0), (x1, y1), (255, 255, 255), 1)
         cv2.putText(img, f"GT {name}", (x0 + 3, y1 - 6), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
+    # Labels stack top-left of the image in rank order, so overlapping boxes
+    # (which share corners) never hide each other's text.
     for rank, (name, conf, x0, y0, x1, y1) in enumerate(preds, 1):
         color = COLORS.get(name, (0, 255, 0))
         cv2.rectangle(img, (x0, y0), (x1, y1), color, 2)
-        text = f"#{rank} {name} {conf:.2f}"
-        cv2.putText(img, text, (x0 + 3, max(y0 + 18, 18)), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 3, cv2.LINE_AA)
-        cv2.putText(img, text, (x0 + 3, max(y0 + 18, 18)), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 1, cv2.LINE_AA)
+        text = f"#{rank} {name} {conf:.2f}  [{x0},{y0}-{x1},{y1}]"
+        pos = (6, 22 * rank)
+        cv2.putText(img, text, pos, cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 3, cv2.LINE_AA)
+        cv2.putText(img, text, pos, cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 1, cv2.LINE_AA)
+        cv2.putText(img, f"#{rank}", (x0 + 4, y0 + 18), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 3, cv2.LINE_AA)
+        cv2.putText(img, f"#{rank}", (x0 + 4, y0 + 18), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 1, cv2.LINE_AA)
     return img
 
 

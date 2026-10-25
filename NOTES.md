@@ -267,9 +267,11 @@ Running log of decisions, bugs and numbers. Bullets, newest section last.
   review-band costing adds those.
 - Worst test cases (`scripts/failures.py`, `outputs/failures/`):
   - `5ded88cs-960_jpg...`: GT Box_broken, score 0.0000; model saw Package 0.79.
-    A crushed-corner box read as intact.
+    A tape-wrapped parcel with a customs form and a crumpled top; the damage
+    is subtle and the parcel looks like the Package class.
   - `670055d7-233Open_boo_jpg...`: GT Box_broken, score 0.0015; model saw
-    Box 0.72 and Box 0.50.
+    Box 0.72 and Box 0.50. A heavily taped box with a torn, dented end; the
+    model read the whole box as intact Box.
   - `76c8973b-164Packageeees_jpg...`: GT Package x2, score 0.9338; model saw
     Open_package 0.93. The costliest kind of false alarm: a confident one.
   - `21926138-50Booooox_jpg...`: GT Box, score 0.8984; model saw Box_broken
