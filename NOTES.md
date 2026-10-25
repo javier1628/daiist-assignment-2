@@ -281,3 +281,43 @@ Running log of decisions, bugs and numbers. Bullets, newest section last.
   The two misses score essentially zero, so no threshold recovers them; the
   false alarms sit at 0.64 to 0.93, inside the flat band, which is why the
   band is wide rather than why it is cheap.
+
+## Review band (two-threshold) sweep (2026-10-25)
+
+- `scripts/review_band.py`: 0.02 grid over (t_low, t_high), outcome costs per
+  unit: pass 0 if intact / 7000 if damaged; review 40 either way (person
+  catches it); fail 10 either way (3-min confirmation, intact unit released).
+  Rescaled to 1,000 units at base rate 1% as in sweep.py. Outputs:
+  `review_grid.csv`, `review_grid.png`, `review_summary.json`,
+  `review_load.csv`, `options.csv`.
+- Result: the minimum is 3,379 DOP per 1,000 (49.21 EUR) at
+  (t_low, t_high) = (0.02, 0.02), i.e. no review band. Ten pairs tie exactly,
+  all with t_low in {0.02..0.08} and t_high up to 0.08, but no test image
+  scores between 0.02 and 0.08, so those bands are empty. 133 pairs sit within
+  one test positive (1,129 DOP) of the minimum: t_low 0.02 to 0.34, t_high
+  0.02 to 0.38. The dedup subset picks the same pair (3,571 DOP).
+- Why no band: with these figures "fail" strictly dominates "review". Both
+  put a person on the unit and both are assumed to catch every damaged one,
+  but fail costs 10 (a 3-minute glance at the photo) and review costs 40 (a
+  10-minute unpack). So whenever the model is unsure, the cheapest thing is
+  to fail the unit, never to review it. The review band can only earn its
+  place if the owner decides a 3-minute glance does not catch everything, or
+  that failing an intact unit has a cost beyond the glance (supplier
+  relations, a wrong claim). Owner's call; config unchanged.
+- At (0.02, 0.02): 60 of 62 test positives fail, 2 pass (the two near-zero
+  misses), 6 of 58 negatives fail. Per 1,000 units: 0.32 missed, 112 failed,
+  0 reviewed. The cheapest pair that actually uses a review band is
+  (0.02, 0.10) at 3,513 DOP, within the flat band, sending 0.68 units per
+  1,000 to review. Note this optimum (0.02) differs from sweep.py's 0.20
+  because sweep.py charged a false alarm the full 40-DOP unpack and nothing
+  for a true positive; here a fail costs 10 regardless.
+- Review load at (0.02, 0.02), 2 staff, 7 h/day, 7-day claim window:
+  20ft (200 units): 22.4 failed, 0 reviewed, 1.1 person-hours, 0.08 days.
+  40ft_low (400): 44.8 failed, 2.2 person-hours, 0.16 days.
+  40ft_high (600): 67.3 failed, 3.4 person-hours, 0.24 days. All fit the
+  window with a wide margin; expected missed damaged units per container
+  0.06 / 0.13 / 0.19.
+- Options at base rate 1% (per 1,000 units; per 400-box container):
+  do nothing 70,000 DOP (28,000); person checks everything 40,000 (16,000);
+  model alone at t = 0.20: 4,165 (1,666); model at the chosen pair
+  (0.02, 0.02): 3,379 (1,352). In EUR per container: 408 / 233 / 24 / 20.
