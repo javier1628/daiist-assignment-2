@@ -414,3 +414,21 @@ Running log of decisions, bugs and numbers. Bullets, newest section last.
 - Image-level at the chosen thresholds: fail only (score >= 0.94) TPR 0.629,
   FPR 0.000; review or fail (score >= 0.20) TPR 0.952, FPR 0.069 (Box 0.080,
   Package 0.061).
+
+## Final checks (2026-10-25)
+
+- `.github/workflows/ci.yml`: on every push and pull request, `uv sync`,
+  `pytest tests/`, then `check.py` if the repository secret
+  `ROBOFLOW_API_KEY` exists (check.py's first step verifies the key, so the
+  secret is required for that step only; without it the step is skipped with
+  a notice and the tests still run). A last step asserts no `runs/` folder
+  exists, so CI can never have trained. The manual `verify.yml` is unchanged.
+- `scripts/survey_datasets.py` deleted: nothing imports it and the candidate
+  survey is finished; its findings stay in the dataset-survey notes above.
+  README.md carries no reference to `data/candidates/` (it is the upstream
+  brief and was never edited).
+- Verified: `.env` never appears in git history on any branch; `.env` and
+  `data/` are untracked and ignored; `weights/best.pt`, `outputs/` (36 files)
+  and `notebooks/train_colab.ipynb` are tracked. The repo root has
+  `api_key.py`, `app.py`, `check.py`, `main.py`, `train.py` and no notebook,
+  so `main.py train` resolves to `train.py` and `main.py app` to `app.py`.
