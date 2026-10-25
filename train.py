@@ -29,6 +29,9 @@ from src.data import DATASET_ID, ensure_dataset  # noqa: E402
 SEED = 42
 BASE_WEIGHTS = "yolo11n.pt"
 WEIGHTS_OUT = ROOT / "weights" / "best.pt"
+# Ultralytics' AMP check downloads a small checkpoint into weights/ on GPU
+# machines. check.py loads every .pt in weights/, so these must not stay.
+AMP_CHECK_WEIGHTS = ("yolo26n.pt", "yolo11n.pt")
 OUT_DIR = ROOT / "outputs"
 TRAIN_LOG = OUT_DIR / "train_log.json"
 NOTES = ROOT / "NOTES.md"
@@ -73,12 +76,49 @@ def append_notes(log: dict) -> None:
         f"(patience {log['train_args']['patience']}). Best epoch: {log['best_epoch']}.",
         f"- Wall-clock: training {log['train_seconds']:.0f}s, evaluation "
         f"{log['eval_seconds']:.0f}s, total {log['total_seconds']:.0f}s.",
-        f"- Best checkpoint copied to `weights/best.pt` ({log['best_pt_bytes'] / 1e6:.1f} MB).",
+        f"- Run directory: `{log['save_dir']}`. Best checkpoint copied to "
+        f"`weights/best.pt` ({log['best_pt_bytes'] / 1e6:.1f} MB).",
     ]
     if log.get("eval_error"):
         lines.append(f"- Evaluation FAILED: {log['eval_error']}. Weights were still saved.")
     with NOTES.open("a", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
+
+
+def training_save_dir(results, model=None) -> Path:
+    """Where Ultralytics actually wrote this run.
+
+    Never a hard-coded path: with project="runs" Ultralytics nests the run
+    under runs/detect/runs/finetune/, not runs/finetune/. The trainer's
+    return value carries the real location.
+    """
+    save_dir = getattr(results, "save_dir", None)
+    if save_dir is None and model is not None:
+        save_dir = getattr(getattr(model, "trainer", None), "save_dir", None)
+    if save_dir is None:
+        raise RuntimeError("training returned no save_dir; cannot locate best.pt")
+    return Path(save_dir)
+
+
+def copy_best_checkpoint(results, dest: Path = WEIGHTS_OUT, model=None) -> Path:
+    """Copy <save_dir>/weights/best.pt to `dest` and return the source path."""
+    best = training_save_dir(results, model) / "weights" / "best.pt"
+    if not best.is_file():
+        raise FileNotFoundError(f"training finished but {best} is missing")
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(best, dest)
+    return best
+
+
+def remove_amp_check_weights(weights_dir: Path = WEIGHTS_OUT.parent) -> list[str]:
+    """Delete checkpoints the AMP check dropped into weights/. Returns names removed."""
+    removed = []
+    for name in AMP_CHECK_WEIGHTS:
+        path = weights_dir / name
+        if path.is_file():
+            path.unlink()
+            removed.append(name)
+    return removed
 
 
 def best_epoch_from_results(run_dir: Path) -> tuple[int | None, int | None]:
@@ -126,18 +166,18 @@ def main() -> int:
 
     t0 = time.time()
     model = YOLO(BASE_WEIGHTS)
-    model.train(data=str(data_yaml), device=device, **TRAIN_ARGS)
+    results = model.train(data=str(data_yaml), device=device, **TRAIN_ARGS)
     log["train_seconds"] = time.time() - t0
 
-    run_dir = ROOT / TRAIN_ARGS["project"] / TRAIN_ARGS["name"]
-    best = run_dir / "weights" / "best.pt"
-    if not best.is_file():
-        raise FileNotFoundError(f"training finished but {best} is missing")
-    WEIGHTS_OUT.parent.mkdir(exist_ok=True)
-    shutil.copy2(best, WEIGHTS_OUT)
+    run_dir = training_save_dir(results, model)
+    best = copy_best_checkpoint(results, WEIGHTS_OUT, model)
+    log["save_dir"] = str(run_dir)
     log["best_pt_bytes"] = WEIGHTS_OUT.stat().st_size
     log["best_epoch"], log["epochs_completed"] = best_epoch_from_results(run_dir)
+    log["amp_check_weights_removed"] = remove_amp_check_weights()
     print(f"copied {best} -> {WEIGHTS_OUT}")
+    if log["amp_check_weights_removed"]:
+        print(f"removed from weights/: {log['amp_check_weights_removed']}")
 
     # Write the log before evaluating, so a failure there cannot lose it.
     OUT_DIR.mkdir(exist_ok=True)

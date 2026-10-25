@@ -213,6 +213,7 @@ def detection_metrics(model, data_yaml: Path, names: list[str], device: str,
         m_cm.confusion_matrix.matrix, names, out_dir / f"confusion_matrix_{subset}",
         f"Test confusion matrix, {subset} (conf {MATRIX_CONF})",
     )
+    result["map_conf"] = SCORE_CONF
     result["confusion_matrix_conf"] = MATRIX_CONF
     result["confusion_matrix_files"] = [f"confusion_matrix_{subset}.csv", f"confusion_matrix_{subset}.png"]
     return result
@@ -378,6 +379,13 @@ def main(weights: Path = WEIGHTS, out_dir: Path = OUT_DIR, stats_json: Path = ST
         "seed": SEED,
         "imgsz": IMGSZ,
         "score_conf": SCORE_CONF,
+        "map_conf": SCORE_CONF,
+        "confusion_matrix_conf": MATRIX_CONF,
+        "conf_note": (
+            f"Per-class P/R/AP and mAP come from a validation pass at conf {SCORE_CONF} "
+            f"(the standard mAP setting). The confusion matrix comes from a second pass "
+            f"at conf {MATRIX_CONF}. Image scores keep every detection at conf {SCORE_CONF}."
+        ),
         "positive_classes": list(POSITIVE_CLASSES),
         "dedup_excluded": sorted(dups),
         "all": {

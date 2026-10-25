@@ -175,3 +175,23 @@ Running log of decisions, bugs and numbers. Bullets, newest section last.
   git-ignored); (2) CSV writers used CRLF line endings, now LF. The scratch
   checkpoint and every file it produced were deleted; nothing from random
   weights is committed.
+
+## Colab run 1 failure and fixes (2026-10-25)
+
+- Bug: `train.py` hard-coded the run directory as `runs/finetune/`, but with
+  `project="runs"` Ultralytics nested it under `runs/detect/runs/finetune/`,
+  so after a complete 50-epoch Colab run the copy to `weights/best.pt` failed.
+  Fix: take the location from the trainer's return value
+  (`results.save_dir / "weights" / "best.pt"`), with `model.trainer.save_dir`
+  as fallback; the run directory is now logged in `train_log.json`.
+  `tests/test_train.py` fakes a nested save_dir and checks the copy.
+- Ultralytics' AMP check on GPU downloads `yolo26n.pt` into `weights/`.
+  `check.py` loads every `.pt` there, so `train.py` now deletes
+  `weights/yolo26n.pt` (and `yolo11n.pt`, same mechanism in older versions)
+  after training, logs what it removed, and both are git-ignored.
+- Evaluation confidences, stated for the report: per-class P/R/AP and mAP
+  come from a validation pass at conf 0.001 (standard for mAP); the confusion
+  matrix comes from a second pass at conf 0.25; image scores keep every
+  detection at conf 0.001. The two passes therefore report different numbers
+  by design. `test_metrics_finetuned.json` records `map_conf`,
+  `confusion_matrix_conf` and a `conf_note` at top level and per subset.
