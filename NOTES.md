@@ -1,5 +1,7 @@
 # Notes
 
+AI-generated working log, written by Claude Code during the build from Javier's prompts. The analysis and conclusions are in REPORT.md.
+
 Running log of decisions, bugs and numbers. Bullets, newest section last.
 
 ## Setup (2026-10-23)
