@@ -33,6 +33,7 @@ The original dataset contained four classes: Box, Box_broken, Open_package and P
 | valid | 240 | 305 | 103 | 64 | 54 | 84 |
 | test | 120 | 136 | 31 | 34 | 29 | 42 |
 
+
 As well as at the image level we see an approximately 50/50 distribution across all splits: test = 62 + 58, training = 424 + 416, validation = 118 + 122. There are approximately 1.2 to 1.3 boxes per image. Only five of the total one thousand two hundred images include a labeled positive and a labeled negative. And there were no images that did not have a label. Every single image within the dataset is 640x640 pixels, because version 6 of the dataset applied auto-orient and a stretch resize 640x640. The augmentation field was empty, therefore, no additional images were created through this method. While Roboflow does not track how they split their images, 840 / 240 / 120 matches the exact default values used by Roboflow when splitting data (70/20/10) thus, the images were most likely randomly divided. When measuring object size in terms of what portion of each photo each labeled box represents, we find median sizes of 26% for Box, 30% for Box_broken, 39% for Open_package, and 46% for Package. 
 With tenth percentile measurements ranging from 8% to 19%, objects represent a significant area of the image and do not present a small-object problem. Box is the class with the smallest objects and the longest tail toward very small objects. Perceptual hash checks revealed 24 pairs of near-identical images. These same images had been uploaded into the system with different names. Six of the 120 test images have a near-identical twin in the train or valid split, making it apparent that the model has viewed 5% of its testing set. The images are phone photos with uneven light, of boxes and packages on floors or sofas and about half the negatives are plastic mailers and padded envelopes rather than cardboard boxes.
 
@@ -65,6 +66,8 @@ The positive class is "compromised": Box_broken or Open_package. The headline nu
 | Box_broken | 0.939 | 0.910 | 0.963 | 0.921 |
 | Open_package | 0.901 | 0.966 | 0.968 | 0.890 |
 | Package | 0.867 | 0.905 | 0.956 | 0.819 |
+
+
 Package is the weakest class (precision 0.867, AP50-95 0.819) and Box_broken has the lowest recall among the positives (0.910). The COCO zero-shot and trivial baselines have no per-class numbers by construction: AP is 0 and precision and recall are undefined, because they never predict any of these classes.
 The confusion matrix is computed at conf 0.25 (the mAP figures use conf 0.001; the two settings are stated in outputs/test_metrics_finetuned.json). The errors that cross the compromised/intact line are: 2 intact Box predicted as Box_broken, 1 Box_broken predicted as Box, 1 Box_broken and 1 Open_package predicted as Package, and in the background row 1 Box_broken and 1 Open_package not detected at all. Open_package and Package are confused once in each direction: an opened mailer looks like a closed one. Three intact Box instances are also lost to background. Everything else is on the diagonal.
 At image level, with the chosen thresholds of Section 6: above the fail line (score ≥ 0.94) recall is 0.629 and the false-positive rate is 0.000, so no intact test image is ever failed on the photo. Above the pass line (score ≥ 0.20, i.e. review or fail) recall is 0.952 (59 of 62) and the false-positive rate 0.069 (4 of 58): 2 of 25 Box (0.08) and 2 of 33 Package (0.06). With 25 and 33 negatives those two rates cannot be told apart.
@@ -89,6 +92,8 @@ For a single threshold, a box that tests above it will go to a person at a cost 
 | 0.70 | 0.919 | 0.034 | 0.81 | 34.1 | 7,011 |
 | 0.80 | 0.919 | 0.034 | 0.81 | 34.1 | 7,011 |
 | 0.90 | 0.871 | 0.017 | 1.29 | 17.1 | 9,715 |
+
+
 The graph depicts a staircase-type function, as opposed to a continuous curve. Therefore, there is no optimal single threshold; every threshold from 0.20 to 0.34 generates the same lowest cost of 6,118 DOP. Furthermore, every threshold from 0.01 to 0.85 is within one test positive (1,129 DOP) of this minimum cost. This identical minimum threshold and the same band is generated using the 114-image subset. In order to compare: Not checking at all:  70,000 DOP per thousand; Checking every box manually:  40,000 DOP per thousand; Using COCO zero-shot:  70,000 DOP per thousand, identical to not checking at all.
 The model performs better than manually checking every box by a ratio of about six-to-one at a threshold of 0.20; however, the model stops performing better than the manual inspector at thresholds of 0.95 and above (42,903 DOP), due to the large number of undetected damaged boxes. As the base rate increases, the minimum-cost threshold falls: 0.65 at a base rate of 0.5%; 0.20 at a base rate of 1%; 0.02 from a base rate of 3% through 10%; Flagging all boxes at a base rate of 15%.
 This represents the sensitivity statement for my most uncertain number. If the true damage rate is three-in-a-hundred as opposed to the CEO’s one-in-a-hundred, then the correct course of action would be to flag nearly all boxes and allow the review band to differentiate them; if the CEO’s first guess of 10 to 15% had been right, then including the model would offer essentially no additional benefit to simply manually checking each box.
@@ -104,14 +109,18 @@ The model that uses a review band continues to out-perform an individual checker
 
 There are three possible outcomes for each box, decided by the model’s score. If the model’s score is less than 0.20 the model can be trusted that the package is in acceptable condition and goes to stock. When the model’s score is between 0.20 and 0.94 the warehouse team will inspect the box. If the model scores above 0.94 the model will be trusted and the box will be set aside and given a three-minute look to confirm the photo. Once the box’s condition is confirmed, a claim will be filed for the item with photo as evidence.
 Test split results: 54 of 58 intact images pass, 4 go to review and 0 fail. 3 of 62 damaged images pass (these are the misses), 20 go to review and 39 fail. Rescaled to 1,000 boxes at a 1% base rate: 0.48 damaged boxes missed, 71.5 boxes reviewed (7.2%), 6.3 boxes failed on the photo (0.6%), and 0 false claims.
+
 Per container, assuming two staff members are available during each of the seven productive hours per day within a seven-day claim window:
 | Container | Boxes | To review | Failed | Person-hours | Days (2 staff) | Missed |
 |---|---|---|---|---|---|---|
 | 20 ft | 200 | 14.3 | 1.3 | 2.5 | 0.18 | 0.10 |
 | 40 ft (low) | 400 | 28.6 | 2.5 | 4.9 | 0.35 | 0.19 |
 | 40 ft (high) | 600 | 42.9 | 3.8 | 7.3 | 0.52 | 0.29 |
+
+
 The "two staff" used here is an assumption; since the number of days also depends on the number of employees, if you had three people on the crew simply divide the days figure by 1.5.
 This is realistic. In a worst-case scenario, a container carrying 600 boxes requires approximately 43 unpacking operations and four glances, or 7.3 person-hours: half a day for two people, inside the seven-day window, alongside unloading and shelving. Without the model, the same container would require 600 unpacks (approximately 100 hours of work), which two people could not clear in a week while doing anything else.
+
 Priced against the alternatives, per 1,000 boxes and per 400-box container:
 | Option | DOP / 1,000 | DOP / container | EUR / container |
 |---|---|---|---|
@@ -119,6 +128,8 @@ Priced against the alternatives, per 1,000 boxes and per 400-box container:
 | Person checks every box | 40,000 | 16,000 | 233 |
 | Model alone, t = 0.20, no review | 38,303 | 15,321 | 223 |
 | Model + review band (0.20, 0.94) | 6,310 | 2,524 | 37 |
+
+
 Under this pricing structure, the model provides little to no value on its own because it generates 68 false claims per 1,000 boxes at 500 DOP each when relying solely on its outputs without a person verifying the outputs. Moreover, it costs nearly as much money to use as checking every box manually. However, the combination of the model and a review band is six times cheaper than either doing nothing or checking every box. The benefit does not lie in how accurate the model is. Rather, it lies in how well it divides labor: the model allows 92% of boxes to remain unchecked by humans, a person inspects 7%, and under 1% are failed on the photo, with no intact box among them.
 
 
