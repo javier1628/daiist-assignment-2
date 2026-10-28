@@ -1,8 +1,5 @@
 # Assignment 2 Report
 
-*Delete this italic guidance as you fill in each section. You'll be asked to
-defend any of this without your code in front of you. Write only what you
-can actually explain.*
 
 - **Name**: Javier Alonso
 - **Student ID**: 20101
